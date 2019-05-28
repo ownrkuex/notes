@@ -81,3 +81,52 @@ const element = React.createElement(
 这个对象称为React元素，可以看做是html标签的js版本的描述。React根据这些对象构建DOM。
 
 ### React元素渲染
+
+假设html文件中有一个`<div>`标签（作为React根DOM节点）：
+
+```html
+<div id="root"></div>
+```
+
+把一棵由React管理的DOM树放入该节点下（或者说把一个React元素渲染到该节点下），可以这么做：
+
+```jsx
+const element = (<h1>Hello, world</h1>);
+ReactDOM.render(element, document.getElementById('root'));
+```
+
+最终出来的效果就是：
+
+```html
+<div id="root">
+  <h1>Hello, world</h1>
+</div>
+```
+
+一个React应用中可以有任意数量的根DOM节点，一般是只有一个。
+
+####　更新已渲染的React元素
+
+React元素是不可变的，可以看做是UI的一个帧。要更新已渲染的React元素就只能创建一个新的然后替换，举个栗子：
+
+```jsx
+function tick() {
+  const element = (
+    <div>
+      <h1>Hello, world!</h1>
+      <h2>It is {new Date().toLocaleTimeString()}.</h2>
+    </div>
+  );
+  ReactDOM.render(element, document.getElementById('root'));
+}
+//　每过一秒就创建一个新的元素并替换掉原来的，出来的效果就是显示实时时间，每秒更新
+setInterval(tick, 1000);
+```
+
+最佳实践：一个React应用只有一个根DOM节点，对于一个React根DOM节点只显式调用一次`ReactDOM.render()`方法，就是把根组件（对应的元素）渲染进去，其他组件都封装在根组件中。
+
+#### 局部渲染
+
+替换渲染React元素的时候，会比较旧的和新的元素并只渲染不同的部分。对于上一个栗子，虽然每过一秒就替换了整个元素，但频繁的重新渲染整个元素显然在性能上不划算。所以在上一个栗子中，刷新的只有时间部分，其他部分比如hello world那块不会去反复渲染，因为一直没变。
+
+### 组件和组件参数
