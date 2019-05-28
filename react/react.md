@@ -105,7 +105,7 @@ ReactDOM.render(element, document.getElementById('root'));
 
 一个React应用中可以有任意数量的根DOM节点，一般是只有一个。
 
-####　更新已渲染的React元素
+#### 更新已渲染的React元素
 
 React元素是不可变的，可以看做是UI的一个帧。要更新已渲染的React元素就只能创建一个新的然后替换，举个栗子：
 
