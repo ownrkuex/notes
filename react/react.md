@@ -130,3 +130,64 @@ setInterval(tick, 1000);
 替换渲染React元素的时候，会比较旧的和新的元素并只渲染不同的部分。对于上一个栗子，虽然每过一秒就替换了整个元素，但频繁的重新渲染整个元素显然在性能上不划算。所以在上一个栗子中，刷新的只有时间部分，其他部分比如hello world那块不会去反复渲染，因为一直没变。
 
 ### 组件和组件参数
+
+通过组件可以把UI划分成一些独立的模块。组件和js函数类似，接受组件参数并返回React元素（描述该组件渲染后的效果）。
+
+#### 定义组件
+
+最简单的方式是：
+
+```jsx
+function Welcome(props) {
+  return (<h1>Hello, {props.name}</h1>);
+}
+```
+
+这个函数是一个合法的React组件，接收组件参数props返回React元素。用这种函数的方式定义的组件称为“函数组件”。
+
+还有一种方式：
+
+```jsx
+class Welcome extends React.Component {
+  render() {
+    return (<h1>Hello, {this.props.name}</h1>);
+  }
+}
+```
+
+这两种方式是等价的。
+
+#### 渲染组件
+
+目前为止，React元素中只包含了常规的html标签：
+
+```jsx
+const element = (<div />);
+```
+
+除了常规的html标签，还可以包含用户自定义组件：
+
+```jsx
+function Welcome(props) {
+  return (<h1>Hello, {props.name}</h1>);
+}
+
+const element = (<Welcome name="Sara" />);
+ReactDOM.render(
+  element,
+  document.getElementById('root')
+);
+```
+
+在上面的栗子中：
+
+1. 调用`ReactDOM.render()`方法渲染`<Welcome name="Sara" />`。
+1. 调用Welcome组件并传入参数`{ name: "Sara" }`。
+1. Welcome组件返回React元素`<h1>Hello, Sara</h1>`。
+1. React渲染`<h1>Hello, Sara</h1>`到根节点下。
+
+注意自定义组件名必须用大写字母开头。
+
+#### 组合组件
+
+
