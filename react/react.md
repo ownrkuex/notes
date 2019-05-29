@@ -314,3 +314,160 @@ function withdraw(account, amount) {
 React强制要求所有组件必须具有纯函数的行为，也就是说组件参数是只读的。
 
 ### 组件内部状态和生命周期
+
+考虑之前那个计时器的例子：
+
+```jsx
+function tick() {
+  const element = (
+    <div>
+      <h1>Hello, world!</h1>
+      <h2>It is {new Date().toLocaleTimeString()}.</h2>
+    </div>
+  );
+  ReactDOM.render(element, document.getElementById('root'));
+}
+
+setInterval(tick, 1000);
+```
+
+把计时器组件化：
+
+```jsx
+function Clock(props) {
+  return (
+    <div>
+      <h1>Hello, world!</h1>
+      <h2>It is {props.date.toLocaleTimeString()}.</h2>
+    </div>
+  );
+}
+
+function tick() {
+  ReactDOM.render(
+    <Clock date={new Date()} />,
+    document.getElementById('root')
+  );
+}
+
+setInterval(tick, 1000);
+```
+
+但是这样还不够，我们希望能把计时器相关的代码全部封装到Clock组件中，外部不需要做额外的工作，说白了就是这种效果：
+
+```jsx
+// 其他代码全在Clock组件里
+ReactDOM.render(<Clock />, document.getElementById('root'));
+```
+
+首先我们需要把Clock组件改写为class组件并增加一个表示当前时间的内部状态：
+
+```jsx
+class Clock extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      time: new Date()
+    };
+  }
+  render() {
+    return (
+      <div>
+        <h1>Hello, world!</h1>
+        <h2>It is {this.state.time.toLocaleTimeString()}</h2>
+      </div>
+    );
+  }
+}
+```
+
+组件的内部状态是私有的，且完全由当前组件控制，对父组件和子组件都不可见。可以通过`this.setState()`方法更新状态，更新状态后将自动调用`render()`方法重新渲染组件。
+
+然后我们需要在组件中的某个地方设置定时器，每过一秒就更新内部状态。为此我们引出两个组件的生命周期方法，在这两个方法中处理定时器相关的逻辑：
+
+```jsx
+class Clock extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      time: new Date()
+    };
+  }
+
+  componentDidMount() {
+    // timer只是一个普通字段，不是状态也不是参数
+    this.timer = setInterval(() => this.setState({
+      time: new Date()
+    }), 1000);
+  }
+
+  componentWillUnmount() {
+    clearInterval(this.timer);
+  }
+
+  render() {
+    return (
+      <div>
+        <h1>Hello, world!</h1>
+        <h2>It is {this.state.time.toLocaleTimeString()}</h2>
+      </div>
+    );
+  }
+}
+```
+
+`componentDidMount()`和`componentWillUnmount()`两个方法都是组件的生命周期方法。组件挂载（第一次渲染）到DOM树后调用`componentDidMount()`；组件从DOM树卸载（删除）前调用`componentWillUnmount()`。
+
+快速梳理一下整个过程：
+
+1. 当`<Clock />`作为参数传递给`ReactDOM.render()`方法时，React首先调用Clock组件的构造器得到Clock组件对象，且该组件的内部状态初始化为当前时间。
+1. React调用组件的`render()`方法，将Clock组件挂载到DOM树。
+1. React调用组件的`componentDidMount()`方法。在方法内部，Clock组件设置定时器，每隔一秒重设内部状态并自动重新渲染。
+1. 如果Clock组件从DOM树卸载，React将先调用`componentWillUnmount()`停止计时器。
+
+#### 关于`this.setState()`方法
+
+* 不要直接修改state对象，把state对象当做不可变的。只能在构造器中赋值state，只能用`this.setState()`方法更新state对象。
+  ```jsx
+  // 错了，这样不会重新渲染
+  this.state.comment = 'Hello';
+  ```
+  ```jsx
+  // 正确姿势
+  this.setState({comment: 'Hello'});
+  ```
+* 组件参数和状态的更新是异步的，如果组件的下一个状态依赖于组件参数和当前状态，应当特别注意：
+  ```jsx
+  // 可能会错，this.state和this.props可能不是最新的
+  this.setState({
+    counter: this.state.counter + this.props.increment,
+  });
+  ```
+  ```jsx
+  // 正确，传入一个函数，指示组件如何根据当前状态和组件参数更新到下一状态
+  this.setState((state, props) => ({
+    counter: state.counter + props.increment
+  }));
+  ```
+* 可以只更新部分状态，举个栗子：
+  ```jsx
+  constructor(props) {
+    super(props);
+    this.state = {
+      posts: [],
+      comments: ["hello, world"]
+    };
+  }
+  ```
+  ```jsx
+  // 只更新posts，comments原封不动，部分更新也会自动渲染
+  this.setState({
+    posts: [8080, 8081, 8082]
+  });
+  ```
+
+#### 瀑布数据流
+
+组件的内部状态无法直接暴露，但可以把自己的内部状态作为组件参数传递给子组件（也只能是子组件，不能是其他）。子组件不会知道自己接收的参数的来源。这种模式称为“瀑布数据流”，组件的状态只能影响自己以及下游的子组件。
+
+组件是有状态的还是无状态的这属于组件内部的实现细节，和其他组件没有任何关系。
