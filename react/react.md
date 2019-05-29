@@ -119,7 +119,7 @@ function tick() {
   );
   ReactDOM.render(element, document.getElementById('root'));
 }
-//　每过一秒就创建一个新的元素并替换掉原来的，出来的效果就是显示实时时间，每秒更新
+// 每过一秒就创建一个新的元素并替换掉原来的，出来的效果就是显示实时时间，每秒更新
 setInterval(tick, 1000);
 ```
 
@@ -149,7 +149,7 @@ function Welcome(props) {
 
 ```jsx
 class Welcome extends React.Component {
-  render() {
+  render() { // 渲染方法
     return (<h1>Hello, {this.props.name}</h1>);
   }
 }
@@ -190,4 +190,127 @@ ReactDOM.render(
 
 #### 组合组件
 
+一个组件中可以包含任意数量的其他组件，比如：
 
+```jsx
+function Welcome(props) {
+  return <h1>Hello, {props.name}</h1>;
+}
+
+function App() {
+  return (
+    <div>
+      <Welcome name="Sara" />
+      <Welcome name="Cahal" />
+      <Welcome name="Edite" />
+    </div>
+  );
+}
+
+ReactDOM.render(
+  <App />,
+  document.getElementById('root')
+);
+```
+
+最佳实践：一个React应用只包含一个名为App根组件，其他所有组件都包含在该组件中。
+
+#### 提取组件
+
+组件不应该过于庞大，过于庞大的组件将难以维护，其中的一些公共的部分也将难以复用。对过于庞大的组件可以把其中的一些部分提取出来做成另一个单独的组件。举个栗子：
+
+```jsx
+// 用户评论组件，展示用户信息、用户头像、评论正文和评论时间
+function Comment(props) {
+  return (
+    <div className="Comment">
+      <div className="UserInfo">
+        <img className="Avatar"
+          src={props.author.avatarUrl}
+          alt={props.author.name}
+        />
+        <div className="UserInfo-name">
+          {props.author.name}
+        </div>
+      </div>
+      <div className="Comment-text">
+        {props.text}
+      </div>
+      <div className="Comment-date">
+        {formatDate(props.date)}
+      </div>
+    </div>
+  );
+}
+```
+
+可以把用户头像部分提取出来做成一个单独的Avatar组件：
+
+```jsx
+function Avatar(props) {
+  return (
+    <img className="Avatar"
+      src={props.user.avatarUrl}
+      alt={props.user.name}
+    />
+
+  );
+}
+```
+
+然后再把Avatar组件和用户信息部分进一步提取出来作为一个UserInfo组件：
+
+```jsx
+function UserInfo(props) {
+  return (
+    <div className="UserInfo">
+      <Avatar user={props.user} />
+      <div className="UserInfo-name">
+        {props.user.name}
+      </div>
+    </div>
+  );
+}
+```
+
+Comment组件简化后成了这样：
+
+```jsx
+function Comment(props) {
+  return (
+    <div className="Comment">
+      <UserInfo user={props.author} />
+      <div className="Comment-text">
+        {props.text}
+      </div>
+      <div className="Comment-date">
+        {formatDate(props.date)}
+      </div>
+    </div>
+  );
+}
+```
+
+最佳实践：适当提取组件可以提高组件的可维护性和复用性。一个应用中应该只有两种组件，一种是小巧的高复用的组件，另一种是起骨架作用的组件。
+
+#### 组件参数是只读的
+
+下面这个函数：
+
+```javascript
+function sum(a, b) {
+  return a + b;
+}
+```
+
+称为“纯函数”。纯函数是指不修改参数且在参数相同的情况下返回值也一定相同的函数。举个反例，下面这个函数就不是纯函数：
+
+```javascript
+function withdraw(account, amount) {
+  account.total -= amount;
+}
+```
+
+React强制要求所有组件必须具有纯函数的行为，也就是说组件参数是只读的。
+
+### 组件内部状态和生命周期
