@@ -474,3 +474,189 @@ class Clock extends React.Component {
 
 ### 事件处理
 
+React中的事件处理和常规的html中的事件处理基本上是一样的，主要有几点不同：
+
+* React中的事件是用camelCase方式命名的，不是lowercase方式。
+* React中只能传入一个函数或lambda表达式作为事件处理器，不能是字符串。
+
+举个栗子，在html中：
+
+```html
+<button onclick="activateLasers()">
+  Activate Lasers
+</button>
+```
+
+在React中就可以：
+
+```jsx
+<button onClick={activateLasers}>
+  Activate Lasers
+</button>
+```
+
+另一个不同点是，在html中可以让事件处理器返回false来阻止默认事件。但React不行，只能调用事件对象的`preventDefault()`方法阻止默认事件。举个栗子，在html中要阻止a标签的默认点击事件（打开新的标签页），可以这样：
+
+```html
+<a href="#" onclick="console.log('The link was clicked.'); return false">
+  Click me
+</a>
+```
+
+但在React中，只能这样：
+
+```jsx
+function ActionLink() {
+  function handleClick(e) { // 只要参数名是e，就默认是事件对象
+    e.preventDefault();
+    console.log('The link was clicked.');
+  }
+
+  return (
+    <a href="#" onClick={handleClick}>
+      Click me
+    </a>
+  );
+}
+```
+
+如果使用class定义组件，最佳实践是把组件类的一个成员方法作为事件处理器。举个栗子，下面的Toggle组件表示一个开关，每次点击都会在ON和OFF之间切换：
+
+```jsx
+class Toggle extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {isToggleOn: true};
+
+    // 必须要绑定，否则点击进入handleClick方法时，this是undefined
+    // 更广泛来说，只要引用了成员方法（后面不带括号），就应该绑定
+    this.handleClick = this.handleClick.bind(this);
+  }
+
+  handleClick() {
+    this.setState(state => ({
+      isToggleOn: !state.isToggleOn
+    }));
+  }
+
+  render() {
+    return (
+      <!-- 引用了this.handleClick方法，没有括号，不是调用，所以必须绑定 -->
+      <button onClick={this.handleClick}>
+        {this.state.isToggleOn ? 'ON' : 'OFF'}
+      </button>
+    );
+  }
+}
+```
+
+从原理上来说，只要把类的成员方法作为函数看待，就需要绑定，否则在函数（其实是方法）执行过程中，this就是undefined。
+
+这种绑定操作有语法糖，把上面的handleClick方法修改如下：
+
+```jsx
+// 很新的特性，慎用
+handleClick = () => {
+  this.setState(state => ({
+    isToggleOn: !state.isToggleOn
+  }));
+}
+```
+
+然后构造器里面的绑定方法就不需要再调用了。
+
+当然也可以把handleClick方法外再包一层lambda表达式作为事件处理器，这样就不必把handleClick看做函数了，也就不需要绑定操作了。但这种方式有性能问题，每次渲染都要重新创建一个lambda表达式对象。如果仅仅是这样其实是完全可以接受的，但lambda表达式作为参数传递给子组件，那么这个子组件也要重新渲染一遍。所以，这种方式不推荐。
+
+#### 事件处理器参数
+
+向事件处理器传递参数有两种方式：
+
+```jsx
+<button onClick={(e) => this.deleteRow(id, e)}>Delete Row</button>
+<button onClick={this.deleteRow.bind(this, id)}>Delete Row</button>
+```
+
+这两种方式是等价的。第一种方式不需要绑定操作，但事件对象要手动传递；第二种方式要额外绑定this，但事件对象会自动传递。其实从第二种方式可以看出，所谓的this绑定，其实是用一种曲折的方式把this对象作为参数传递给函数。传递任意参数（绑定任意对象）都可以用这种方式，比如上面的id。
+
+### 条件渲染
+
+最简单直接的条件渲染：
+
+```jsx
+function Greeting(props) {
+  const isLoggedIn = props.isLoggedIn;
+  if (isLoggedIn) {
+    return (<UserGreeting />);
+  }
+  return (<GuestGreeting />);
+}
+```
+
+使用局部变量实现条件渲染：
+
+```jsx
+render() {
+  // 防止竞态条件
+  const isLoggedIn = this.state.isLoggedIn;
+  let button;
+
+  if (isLoggedIn) {
+    button = (<LogoutButton />);
+  } else {
+    button = (<LoginButton />);
+  }
+
+  return (
+    <div>
+      <Greeting isLoggedIn={isLoggedIn} />
+      {button}
+    </div>
+  );
+}
+```
+
+其实上面两种方式都差不多，都很繁琐。下面使用&&操作符实现单分支条件渲染：
+
+```jsx
+function Mailbox(props) {
+  const unreadMessages = props.unreadMessages;
+  return (
+    <div>
+      <h1>Hello!</h1>
+      {
+        unreadMessages.length > 0 && (
+          <h2>
+            You have {unreadMessages.length} unread messages.
+          </h2>
+        )
+      }
+    </div>
+  );
+}
+```
+
+三目运算符实现条件渲染：
+
+```jsx
+render() {
+  const isLoggedIn = this.state.isLoggedIn;
+  return (
+    <div>
+      {isLoggedIn ? (
+        <LogoutButton onClick={this.handleLogoutClick} />
+      ) : (
+        <LoginButton onClick={this.handleLoginClick} />
+      )}
+    </div>
+  );
+}
+```
+
+如果三目运算符操作的表达式太长，可读性会变差。这个时候应该考虑提取组件。
+
+#### 中止渲染
+
+组件的`render()`方法如果返回null，可以阻止该组件被渲染，起到隐藏组件的效果。返回null不影响生命周期方法，该调用的生命周期方法还是会调用。
+
+### 列表和Keys
+
