@@ -660,3 +660,50 @@ render() {
 
 ### 列表和Keys
 
+#### 循环渲染
+
+循环渲染有两种方式，一种是直接用for循环或while循环准备好React元素数组，再将该数组嵌入到JSX中；另一种是用数组的`map()`方法将普通数组映射为React元素数组，再将该数组嵌入到JSX中。
+
+注意如果传给`map()`方法的映射函数过于复杂，应考虑提取组件。
+
+#### 基本列表组件
+
+看下面的栗子，组件接收一个整数数组作为参数，返回整数的列表。
+
+```jsx
+function NumberList(props) {
+  const numbers = props.numbers;
+  const listItems = numbers.map(number => (
+    <li>{number}</li>
+  ));
+  return (
+    <ul>{listItems}</ul>
+  );
+}
+```
+
+这段代码会引发一个警告：列表项应该要有一个key。消除警告要这么做：
+
+```jsx
+function NumberList(props) {
+  const numbers = props.numbers;
+  // key是字符串属性，key={number}这里有一个自动类型转换
+  const listItems = numbers.map(number => (
+      <li key={number}>
+        {number}
+      </li>
+  ));
+  return (
+    <ul>{listItems}</ul>
+  );
+}
+```
+
+#### Keys
+
+如果一个组件以列表的形式包含若干子组件或标签，那么这些子组件或标签就必须要有key属性。key用于唯一标识一个列表项（在同一级中）。在更新组件时，通过这个唯一标识才可以判断某个列表项是否发生变化、是否是新增的以及哪些列表项被删除了。如果找不到合适的方式设置key，可以把列表项索引当做key，这也是默认行为，但不推荐这么做。
+
+注意设置key的方式和组件参数完全一样，但key不是组件参数。
+
+### 表单
+
