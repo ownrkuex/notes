@@ -116,13 +116,73 @@ h1 {
 
 CSS颜色有几种常见的表达方式：
 
-* 直接用颜色名，比如red、blue等。
+* 直接用颜色名，比如red、blue等
 * #ff6347
 * rgb(255, 99, 7)，提示一下，灰色的rgb三个值是一样的
 * rgba(2555, 99, 7, 0.5)
 
-CSS和颜色相关的常见属性：
+CSS中和颜色相关的常见属性：
 
 * 字体颜色color
 * 背景颜色background-color
 * 边框颜色border-color
+
+### CSS背景
+
+CSS中和背景相关的常见属性：
+
+* 背景颜色background-color
+* 背景图片background-image，设置方式如下：
+
+  ```css
+  body {
+    background-image: url("paper.png");
+  }
+  ```
+
+  默认情况下，图片大小不变，以重复排列的方式覆盖整个元素。可以通过background-repeat属性改变这种默认行为：
+
+  ```css
+  body {
+    background-image: url("paper.png");
+    /* 
+    图片大小不变，以横向重复排列的方式覆盖元素宽度，
+    出来的效果就是第一行被图片重复占满，
+    如果要纵向重复排列，就是repeat-y，
+    出来的效果就是左边第一列被图片重复占满
+    */
+    background-repeat: repeat-x;
+  }
+  ```
+
+  不要重复可以这样：
+
+  ```css
+  body {
+    background-image: url("paper.png");
+    background-repeat: no-repeat; /* 图片大小不变，不要重复 */
+    background-position: right top; /* 图片固定在元素右上角，默认是左上角 */
+  }
+  ```
+
+  ```css
+  body {
+    background-image: url("paper.png");
+    background-repeat: no-repeat;
+    background-position: right top;
+    /* 图片位置相对浏览器窗口固定 */
+    background-attachment: fixed;
+  }
+  ```
+
+  上面的栗子中，作为背景的图片的大小都是不变的，调整背景图大小可以用background-size属性。有一个常用的值：100% 100%，背景图宽高和元素一致。
+
+  设置背景相关属性的简便方式如下：
+
+  ```css
+  body {
+    background: #ffffff url("img_tree.png") no-repeat fixed right top;
+  }
+  ```
+
+  从左到右依次是-color -image -repeat -attachment -position，都是可以省略的，至少有一个就行。
