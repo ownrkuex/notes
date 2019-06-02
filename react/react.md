@@ -831,3 +831,51 @@ class NameForm extends React.Component {
 #### 同时处理多个input
 
 如果多个input上的事件交给一个事件处理器处理，那么这些input上要有name属性，这样在事件处理器中就可以通过event.target.name区分当前事件发生在哪个input上。
+
+#### input空值
+
+如果把input的value值设置为常量，那么该input是不可编辑的。举个栗子：
+
+```jsx
+/* 随便组件的状态怎么变，输入框里都只有一个hi，因为每次渲染都只会渲染这个常量
+   出来的效果就是不可编辑
+   之前的栗子可以编辑是因为把value设置成组件状态，且有onChange配合
+   达到可编辑的效果除了之前栗子的做法，还可以把value设置成null或undefined，
+   这样不需要onChange也可以编辑，不过这样意义不大
+*/
+ReactDOM.render(<input value="hi" />, mountNode);
+```
+
+### ref转发
+
+之前我们说过在React组件树中数据流是单向的，只能从父组件到子组件，但其实通过ref转发我们可以做到信息从子组件传递给父组件。这种逆向流动一般发生在叶子组件（节点）中，这些组件通常都是一些小巧简单的高复用组件。举个栗子：
+
+```jsx
+function FancyButton(props) {
+  return (
+    <button className="fancy-button">
+      {props.children}
+    </button>
+  );
+}
+```
+
+使用FancyButton组件的组件可能需要直接操作FancyButton组件内部的button，为了操作上的简便可以直接把button暴露给外部：
+
+```jsx
+const FancyButton = React.forwardRef((props, ref) => (
+  <button ref={ref} className="fancy-button">
+    {props.children}
+  </button>
+));
+```
+
+通过这种方式定义的组件，把原本私有的button公开。外部可以这么访问：
+
+```jsx
+const ref = React.createRef();
+<FancyButton ref={ref}>Click me!</FancyButton>;
+// ref.current就是FancyButton内部的button
+```
+
+注意当且仅当`React.forwardRef()`方式定义组件时，组件才会接收ref参数。ref参数无法通过props获取。另外，不仅基本标签（button、p、h1这种）可以公开，React组件也可以用ref转发的方式公开。
