@@ -707,3 +707,127 @@ function NumberList(props) {
 
 ### 表单
 
+React中的表单和普通的html表单几乎完全一样。下面这段代码：
+
+```html
+<form>
+  <label>
+    Name:
+    <input type="text" name="name" />
+  </label>
+  <input type="submit" value="Submit" />
+</form>
+```
+
+作为普通的html表单和作为React组件，其行为是完全一样的。但React可以在此基础上加点东西，比如增加表单提交事件和用户输入事件：
+
+```jsx
+class NameForm extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {value: ''};
+
+    this.handleChange = this.handleChange.bind(this);
+    this.handleSubmit = this.handleSubmit.bind(this);
+  }
+
+  handleChange(event) {
+    // 除了记录最新的用户输入，还可以对用户输入进行实时检测，动态提示错误
+    // 甚至还可以直接修正输入
+    this.setState({value: event.target.value});
+  }
+
+  handleSubmit(event) {
+    // 除了日志记录，还可以在提交表单时检测用户输入，根据检测结果中止提交和提示错误
+    alert('A name was submitted: ' + this.state.value);
+    event.preventDefault();　// 中止提交
+  }
+
+  render() {
+    return (
+      <form onSubmit={this.handleSubmit}>
+        <label>
+          Name:
+          <input 
+            type="text" 
+            value={this.state.value} 
+            onChange={this.handleChange} 
+          />
+        </label>
+        <input type="submit" value="Submit" />
+      </form>
+    );
+  }
+}
+```
+
+上面这个组件称为受控组件。
+
+#### textarea
+
+在普通html表单中，textarea的内容定义在子节点中，比如：
+
+```html
+<textarea>Hello, world!</textarea>
+```
+
+但是在React表单中得这么写：
+
+```jsx
+// 和单行input文本框一致
+(<textarea value="Hello, world!" />)
+```
+
+#### select
+
+在普通的html表单中是这么使用select构造下拉菜单的：
+
+```html
+<select>
+  <!-- 选中了第二项 -->
+  <option value="grapefruit">Grapefruit</option>
+  <option selected value="coconut">Coconut</option>
+</select>
+```
+
+在React表单中得这么写：
+
+```jsx
+// 单选，选中了第二项
+(
+  <select value="coconut">
+    <option value="grapefruit">Grapefruit</option>
+    <option value="coconut">Coconut</option>
+  </select>
+)
+```
+
+多选：
+
+```jsx
+// 全选
+(
+  <select multiple={true} value={["grapefruit", "coconut"]}>
+    <option value="grapefruit">Grapefruit</option>
+    <option value="coconut">Coconut</option>
+  </select>
+)
+```
+
+#### checkbox
+
+在普通html表单中构造复选框：
+
+```html
+<input checked type="checkbox" />
+```
+
+在React表单中：
+
+```jsx
+(<input type="checkbox" checked={true} />)
+```
+
+#### 同时处理多个input
+
+如果多个input上的事件交给一个事件处理器处理，那么这些input上要有name属性，这样在事件处理器中就可以通过event.target.name区分当前事件发生在哪个input上。
