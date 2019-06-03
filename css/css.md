@@ -186,3 +186,54 @@ CSS中和背景相关的常见属性：
   ```
 
   从左到右依次是-color -image -repeat -attachment -position，都是可以省略的，至少有一个就行。
+
+### CSS边框
+
+CSS中和边框相关的常见属性：
+  
+* border-style属性用于设置边框样式，取值主要有以下几个：
+  * dotted点状边框
+  * dashed虚线边框
+  * solid实线边框
+  * double双实线边框
+  * inset三维凹陷边框
+  * outset三维凸起边框
+  * none无边框
+  * hidden隐藏边框
+* border-width边框宽度。
+* border-color边框颜色。
+* border-radius边框圆弧半径
+
+-style、-width、-color三个属性在设置时有一些共同特点：设置了四个值时顺序是上、右、下、左；设置了两个值时，第一个值表示上下，第二个值表示左右；设置了三个值时，第一个值表示上，第二个值表示左右，第三个值表示下。
+
+设置边框相关属性的简便方式如下：
+
+```css
+p {
+  border: 5px solid red;
+}
+```
+
+从左到右依次是-width -style -color，其中-style是必须的。
+
+### CSS外间距
+
+margin表示元素的外间距，和之前的边框-style、-width、-color属性类似（在二、三、四个值的情况下）。
+
+可以通过把子元素的左右margin设置为auto实现子元素在父元素中水平居中：
+
+```css
+div {
+  margin: 20px auto;
+}
+```
+
+#### 外间距塌陷
+
+举个栗子，位置在上的元素的下间距为50px，位置在下的元素的上间距为20px，那么两个元素上下间距为50px而不是70px，因为20px重叠到了50px中。但是左右外间距没有这种现象。
+
+### CSS内间距
+
+padding表示元素的内间距，和之前的边框-style、-width、-color属性类似（在二、三、四个值的情况下）。
+
+注意默认情况下，内间距在元素的width/height之外（box-sizing默认值content-box）。可以把box-sizing的值设置为border-box，这样width/height就会把边框包括进去，但外间距仍在外面。
