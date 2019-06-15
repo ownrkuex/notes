@@ -253,3 +253,90 @@ Number('0b11') // 3
 ```
 
 ## Number.EPSILON
+
+`Number.EPSILON`表示JavaScript能表示的最小的浮点数精度，其值为`Math.pow(2, -52)`。这个常量一般用于浮点数计算中的误差设置。
+
+## 函数参数的默认值
+
+ES6中可以为函数的参数设置默认值：
+
+```js
+function add(x = 0, y = 0) {
+  return x + y;
+}
+```
+
+函数参数的默认值是惰性求值的，也就是说，只有在默认值生效（`=== undefined`）的情况下，才会计算默认值表达式。
+
+## 函数参数默认值的应用
+
+* 指定一个参数不可省略，省略就抛出错误：
+  
+  ```js
+  function throwIfMissing() {
+    throw new Error('Missing parameter');
+  }
+
+  function foo(mustBeProvided = throwIfMissing()) {
+    return mustBeProvided;
+  }
+
+  foo();
+  // Error: Missing parameter
+  ```
+
+## rest参数
+
+rest参数的形式是`...参数名`，类型是数组。rest参数的作用是收集多余的参数到数组中，这样就可以实现接收任意数量参数的效果。rest参数和java中的`Type... name`语法类似。
+
+```js
+function push(array, ...items) {
+  items.forEach(function(item) {
+    array.push(item);
+    console.log(item);
+  });
+}
+
+var a = [];
+push(a, 1, 2, 3);
+```
+
+注意rest参数后面不可以有其他参数。
+
+## 箭头函数
+
+说白了就是lambda表达式，和java中的lambda表达式语法类似，java中是`->`，javascript中是`=>`。javascript中有一些特殊情况需要注意：
+
+* 直接返回花括号括起的javascript对象时，需要加上圆括号。
+
+  ```js
+  // 错误
+  let getTempItem = id => { id: id, name: "Temp" };
+  // 正确
+  let getTempItem = id => ({ id: id, name: "Temp" });
+  ```
+
+* 函数体内的this对象，就是定义时所在的对象，而不是使用时所在的对象。也就是说箭头函数作为类的成员方法不需要绑定。
+* 函数体内不能有`yield`，也就是说箭头函数不能作为generator函数。
+
+### 不适用场合
+
+* 定义对象的方法，且该方法内部包括this。
+
+  ```js
+  const cat = {
+    lives: 9,
+    jumps: () => {
+      this.lives--;
+    }
+  }
+  ```
+
+* 需要动态this的时候，也不应使用箭头函数。
+
+  ```js
+  var button = document.getElementById('press');
+  button.addEventListener('click', () => {
+    this.classList.toggle('on');
+  });
+  ```
