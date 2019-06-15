@@ -98,7 +98,7 @@ b // 2
 c // 4
 ```
 
-如果右边是不可遍历的值（不具备Iterator接口），就会报错。注意空对象`{}`是不可遍历的。
+如果右边是不可遍历的值（不具备Iterator接口），就会报错。注意用花括号括起的普通对象是不可遍历的，也就是说数组的解构赋值不可以用于对象。
 
 ### 默认值
 
@@ -120,3 +120,136 @@ let [c = d, d = 1] = []; // ReferenceError：d未定义
 
 ## 对象的解构赋值
 
+解构不仅可以用于数组，还可以用于对象：
+
+```js
+let { b, a } = { a: "foo", b: "bar" };
+a // "foo"
+b // "bar"
+let { c } = { a: "foo", b: "bar" };
+c // undefined，解构失败
+```
+
+对象的解构赋值除了可以取得对象的成员变量，还可以取得成员方法：
+
+```js
+let { log } = console; // 获取console的log方法，赋值给log
+log('hello');
+```
+
+对象的解构赋值可以取到继承的属性：
+
+```js
+const obj1 = {};
+const obj2 = { foo: 'bar' };
+Object.setPrototypeOf(obj1, obj2);
+
+const { foo } = obj1;
+foo // "bar"
+```
+
+和数组解构类似，对象解构也可以设置默认值。默认值生效的条件是对象中相应的属性或方法`=== undefined`。
+
+将一个已声明的变量用于解构赋值需要注意一个坑：
+
+```js
+let x;
+{ x } = { x: 1 }; // 语法错误，将{ x }解释成了代码块
+({ x } = { x: 1 }); // 正确的写法
+```
+
+数组在本质上是特殊的对象，所以对象解构也可以用于数组：
+
+```js
+let arr = [1, 2, 3];
+let { [0]: first, [arr.length - 1]: last } = arr;
+first // 1
+last // 3
+```
+
+## 字符串的解构赋值
+
+字符串可以看作是一个类似数组的对象，因此字符串也可以解构赋值：
+
+```js
+const [a, b, c, d, e] = 'hello';
+a // h
+b // e
+c // l
+d // l
+e // o
+const { length } = 'hello';
+length // 5
+```
+
+## 函数参数的赋值解构
+
+函数的参数也可以赋值解构：
+
+```js
+function add([x, y]){
+  return x + y;
+}
+
+add([1, 2]); // 3
+```
+
+add函数的参数类型是一个数组，但在传入参数的那一刻，参数被解构成变量x和y，函数中的代码只能使用x和y。
+
+同样，函数参数的解构赋值也可以使用默认值：
+
+```js
+function move({x = 0, y = 0} = {}) {
+  return [x, y];
+}
+
+move({x: 3, y: 8}); // [3, 8]
+move({x: 3}); // [3, 0]
+move({}); // [0, 0]
+move(); // [0, 0]
+```
+
+同样，默认值触发的条件是相应的对象属性或方法`=== undefined`。
+
+## 解构赋值的用途
+
+* 交换变量的值：
+  
+  ```js
+  let x = 1;
+  let y = 2;
+  ([y, x] = [x, y]);
+  x // 2
+  y // 1
+  ```
+
+* 当函数返回多个值时，这些值会包装在数组或对象中返回。通过解构赋值，可以方便地取出多个返回值。
+* 方便地将一组参数与变量名对应起来并指定默认值，提高可读性。
+* 快速提取JSON对象中的值。
+* 遍历map对象：
+
+  ```js
+  const map = new Map();
+  map.set('first', 'hello');
+  map.set('second', 'world');
+
+  for (let [key, value] of map) {
+    console.log(key + " is " + value);
+  }
+  // first is hello
+  // second is world
+  ```
+
+## 二进制、八进制与十六进制表示法
+
+二进制用前缀`0b`，八进制用前缀`0o`，十六进制用前缀`0x`。
+
+其他进制转十进制：
+
+```js
+Number('0xff') // 255
+Number('0o77') // 63
+Number('0b11') // 3
+```
+
+## Number.EPSILON
