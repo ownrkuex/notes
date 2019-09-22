@@ -1246,3 +1246,45 @@ class FlakyIntegrationSpec extends Specification {
   }
 }
 ```
+
+## 与spring-boot集成
+
+### maven
+
+```
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-test</artifactId>
+    <scope>test</scope>
+</dependency>
+<dependency>
+    <groupId>org.spockframework</groupId>
+    <artifactId>spock-core</artifactId>
+    <scope>test</scope>
+</dependency>
+<dependency>
+    <groupId>org.spockframework</groupId>
+    <artifactId>spock-spring</artifactId>
+    <scope>test</scope>
+</dependency>
+<dependency>
+    <groupId>cglib</groupId>
+    <artifactId>cglib-nodep</artifactId>
+    <version>3.2.9</version>
+    <scope>test</scope>
+</dependency>
+```
+
+### 测试spring-boot接口
+
+```
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@ContextConfiguration(classes = Application) // 指定入口点
+@ActiveProfiles("test")
+@Stepwise
+class AreaControllerSpec extends Specification {
+  @Autowired
+  private TestRestTemplate restTemplate
+  // 发起请求restTemplate.exchange(url, method, headers, responseType)
+}
+```
