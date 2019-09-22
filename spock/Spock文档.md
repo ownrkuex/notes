@@ -1282,7 +1282,7 @@ class FlakyIntegrationSpec extends Specification {
 @ContextConfiguration(classes = Application) // 指定入口点
 @ActiveProfiles("test")
 @Stepwise
-class AreaControllerSpec extends Specification {
+class XxxControllerSpec extends Specification {
   @Autowired
   private TestRestTemplate restTemplate
   // 发起请求restTemplate.exchange(url, method, headers, responseType)
