@@ -1,3 +1,5 @@
+## Elasticsearch 实用教程
+
 ### 核心概念
 
 1. 数据从被写入到可以被搜索到，有一个时间差，大概１秒，称为Nearly Real Time，简称**NRT**。
@@ -33,7 +35,7 @@ DELETE /{index_name}
 #### 重要的索引设置
 * **number_of_shards**: primary shards数量，索引创建后不可修改
 * **number_of_replicas**: replica shards数量，索引创建后可以修改
-* **analysis**: 在当前索引中创建自定义的全文字段分析器，后面详细写
+* **analysis**: 在当前索引中创建自定义的text字段分析器，后面详细写
 
 #### 修改索引设置
 ```
@@ -47,5 +49,16 @@ PUT /{index_name}/_settings
 ### 类型
 
 #### 文档元数据
+* _source: 文档的实际内容(有效负载)
+* _type: 文档所属类型
+* _index: 文档所属索引
+* _id: 文档唯一标识，可手动指定，不指定将由Elasticsearch自动生成
 
-#### 基本数据类型
+#### 常用数据类型
+* keyword: 普通的字符串类型，和java中的String差不多。
+* **text**: 文本类型，是Elasticsearch中最特殊也是最重要的一个类型。Elasticsearch会对该类型的字段分词，并根据分词结果做倒排索引。后面详细写。
+* 整数类型: byte, short, integer, long, 都是有符号的，跟java差不多。
+* 逻辑类型: boolean，跟java一样
+* 浮点类型: 常用的就是float和double，跟java中的一样
+* 二进制类型: binary，用来保存图片、音频之类的
+* date: 日期类型，Elasticsearch中其实并没有专门的时间类型，date类型的字段的值可以是日期格式化的字符串，也可以是表示毫秒时间戳的长整数，但最终都会存储为毫秒时间戳。
