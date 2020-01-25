@@ -23,6 +23,8 @@
 * 生产者：创建和发布消息的一方。
 * 消费者：订阅和读取消息的一方。
 * 偏移量：消息元数据之一，自增整数。在给定分区中，消息的偏移量是唯一的。
+* 拉取偏移量：特定消费者对特定分区的消费进度。拉取偏移量只与特定的消费者关联，保存在消费者本地。
+* 提交偏移量：每次消息消费后，需要提交偏移量。在提交偏移量时，一般会使用拉取偏移量的值作为提交偏移量提交到分区。提交偏移量只与特定的分区关联，保存在一个特殊主题__consumer_offsets中。
 * 消费者群组：订阅同一个主题的若干个消费者可以组成消费者群组。群组能保证**一个分区只能被群组内一个消费者使用**（消费者对分区的所有权关系）。
 
 ![](kafka_consumer_group.PNG)
@@ -35,7 +37,7 @@
 
 ### 生产者重要配置项
 
-```
+```java
 Properties kafkaProducerProps = new Properties();
 // 必须要配置的项
 kafkaProducerProps.put("bootstrap.servers", "broker1:9092,broker2:9092");
@@ -58,14 +60,14 @@ KafkaProducer producer = new KafkaProducer<String, String>(kafkaProducerProps);
 
 * 发送并忘记
 
-```
+```java
 ProducerRecord<String, String> record = new ProducerRecord<>("topic", "key", "value");
 producer.send(record);
 ```
 
 * 同步发送
 
-```
+```java
 ProducerRecord<String, String> record = new ProducerRecord<>("topic", "key", "value");
 Future<RecordMetadata> future = producer.send(record);
 RecordMetadata metadata = future.get();
@@ -73,7 +75,7 @@ RecordMetadata metadata = future.get();
 
 * 异步发送
 
-```
+```java
 private static final class MyProducerCallback implements Callback {
     @Override
     public void onCompletion(RecordMetadata metadata, Exception e) {
@@ -103,8 +105,49 @@ key为null，用轮询的方式把消息均匀分布到各个分区上；key不�
 
 ### 分区再均衡
 
-分区的所有权从一个消费者移动到另一个消费者的过程称为再均衡。再均衡期间，当前群组会整体不可用，且上一个消费者的读取状态会丢失。应尽量避免不必要的再均衡。
+分区的所有权从一个消费者移动到另一个消费者的过程称为再均衡。再均衡期间，当前群组会整体不可用，且上一个消费者的拉取偏移量会丢失。应尽量避免不必要的再均衡。
 
 ### 触发再均衡的条件
 
-* 每个消费者都有一个后台的心跳线程，每隔一段时间(`heartbeat.interval.ms`)向群组协调器broker发送心跳。若群组协调器超过一定时间(`session.timeout.ms`)没有收到心跳，就认为该消费者已死亡，将其移除群组并触发再均衡。
+* 每个消费者都有一个后台的心跳线程，每隔一段时间(`heartbeat.interval.ms`)向群组协调器broker发送心跳。若群组协调器超过一定时间(`session.timeout.ms`)没有收到心跳，就认为该消费者已死亡，将其移出群组并触发再均衡。
+* 消费者超过一定时间(`max.poll.interval.ms`)没有调用poll方法也会被移出群组并触发再均衡。
+* 新消费者第一次调用poll时加入群组。
+* 消费者调用close主动关闭时退群。
+
+### 消费者的正确使用姿势
+
+#### 创建
+
+```java
+Properties props = new Properties();
+// 必须要配置的项
+props.setProperty("bootstrap.servers", "broker1:9092,broker2:9092");
+props.setProperty("key.deserializer", "com.xx.StringDeserializer");
+props.setProperty("value.deserializer", "com.xx.StringDeserializer");
+
+// 可选项
+// group.id 指定所属群组
+// heartbeat.interval.ms
+// session.timeout.ms
+// max.poll.interval.ms
+// auto.offset.reset 有三个值earliest, latest和none，在分区没有 提交偏移量 的
+// 情况下，earliest从偏移量0开始消费，latest从最新偏移量开始消费，none抛出异常，默认是latest
+// enable.auto.commit 是否自动提交偏移量，设为true，消费者会以一定时间间隔提交当前的拉取偏移量
+// 默认为true，但建议设为false，因为自动提交会有消息重复的风险
+// partition.assignment.strategy 分区分配给消费者的策略，Range 连续分配 RoundRobin 逐个分配，可以自定义
+// max.poll.records poll一次能拿到的最大消息数量
+
+KafkaConsumer<String, Person> consumer = new KafkaConsumer<>(props);
+```
+
+#### 订阅
+
+```java
+class RebalanceHandler implements ConsumerRebalanceListener {
+    // todo
+}
+
+consumer.subscribe(Collections.singletonList("test.topic"), new RebalanceHandler());
+```
+
+#### 轮询
