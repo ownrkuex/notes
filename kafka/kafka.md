@@ -86,6 +86,25 @@ producer.send(record, new MyProducerCallback());
 
 ### 自定义序列化器
 
+1. 实现`Serializer<T>`接口
+1. value.serializer指定为`Serializer<T>`的实现类
+1. KafkaProducer和ProducerRecord使用T类型的参数
+
+### 默认分区策略
+
+key为null，用轮询的方式把消息均匀分布到各个分区上；key不为null，根据key的散列值把消息映射到特定分区上。在不改变分区数量的情况下，同一个key总是被映射到同一个分区上。
+
+### 自定义分区器
+
+1. 实现`Partitioner`接口
+1. KafkaProducer的`partitioner.class`属性设置为`Partitioner`的实现类
+
 ## 消费者
 
-// todo
+### 分区再均衡
+
+分区的所有权从一个消费者移动到另一个消费者的过程称为再均衡。再均衡期间，当前群组会整体不可用，且上一个消费者的读取状态会丢失。应尽量避免不必要的再均衡。
+
+### 触发再均衡的条件
+
+* 每个消费者都有一个后台的心跳线程，每隔一段时间(`heartbeat.interval.ms`)向群组协调器broker发送心跳。若群组协调器超过一定时间(`session.timeout.ms`)没有收到心跳，就认为该消费者已死亡，将其移除群组并触发再均衡。
