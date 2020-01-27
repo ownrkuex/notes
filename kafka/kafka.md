@@ -137,17 +137,87 @@ props.setProperty("value.deserializer", "com.xx.StringDeserializer");
 // partition.assignment.strategy 分区分配给消费者的策略，Range 连续分配 RoundRobin 逐个分配，可以自定义
 // max.poll.records poll一次能拿到的最大消息数量
 
+// KafkaConsumer非线程安全
 KafkaConsumer<String, Person> consumer = new KafkaConsumer<>(props);
 ```
 
-#### 订阅
+#### 订阅和轮询
+
+* at-least once: 保证消息不丢，但可能重复。消费者已经处理完了，但是offset还没提交，此时消费者挂了，就会导致消费者重复消费。
 
 ```java
 class RebalanceHandler implements ConsumerRebalanceListener {
-    // todo
+    @Override
+    public void onPartitionsRevoked(Collection<TopicPartition> partitions) {
+        // sync commit offset
+    }
+
+    @Override
+    public void onPartitionsAssigned(Collection<TopicPartition> partitions) {
+        // do nothing
+    }
 }
 
 consumer.subscribe(Collections.singletonList("test.topic"), new RebalanceHandler());
+
+try {
+    while (true) {
+        ConsumerRecords<String, Person> records = consumer.poll(100); // throws WakeupException
+        for (ConsumerRecord<String, Person> record : records) {
+            // process record
+            storeRecordInDB(record.key(), record.value());
+        }
+        consumer.commitAsync();
+    }
+} catch (WakeupException ignored) { // consumer.wakeup() 触发此异常使退出循环
+} finally {
+    try {
+        consumer.commitSync();
+    } finally {
+        consumer.close();
+    }
+}
 ```
 
-#### 轮询
+* exactly once: 保证消息不丢失也不重复。处理消息和提交偏移量作为一个原子事务。比较常见的做法是用数据库事务实现。
+
+```java
+class RebalanceHandler implements ConsumerRebalanceListener {
+    @Override
+    public void onPartitionsRevoked(Collection<TopicPartition> partitions) {
+        commitDBTransaction();
+    }
+
+    @Override
+    public void onPartitionsAssigned(Collection<TopicPartition> partitions) {
+        for (TopicPartition partition : partitions) {
+            consumer.seek(partition, getOffsetFromDB(partition));
+        }
+    }
+}
+
+consumer.subscribe(Collections.singletonList("test.topic"), new RebalanceHandler(consumer));
+
+try {
+    while (true) {
+        ConsumerRecords<String, Person> records = consumer.poll(100); // throws WakeupException
+        beginDBTransaction();
+        for (ConsumerRecord<String, Person> record : records) {
+            // process record
+            storeRecordInDB(record.key(), record.value());
+            storeOffsetInDB(record.topic(), record.partition(), record.offset());
+        }
+        commitDBTransaction();
+        // 不需要提交偏移量给kafka了
+    }
+} catch (WakeupException ignored) { // consumer.wakeup() 触发此异常使退出循环
+} finally {
+    consumer.close();
+}
+```
+
+### 反序列化器
+
+1. 实现`Deserializer<T>`接口
+1. value.deserializer指定为`Deserializer<T>`的实现类
+1. KafkaConsumer和ConsumerRecord使用T类型的参数
