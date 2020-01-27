@@ -149,7 +149,7 @@ KafkaConsumer<String, Person> consumer = new KafkaConsumer<>(props);
 class RebalanceHandler implements ConsumerRebalanceListener {
     @Override
     public void onPartitionsRevoked(Collection<TopicPartition> partitions) {
-        // sync commit offset
+        consumer.commitSync(currentOffsets);
     }
 
     @Override
@@ -166,6 +166,8 @@ try {
         for (ConsumerRecord<String, Person> record : records) {
             // process record
             storeRecordInDB(record.key(), record.value());
+            currentOffsets.put(new TopicPartition(record.topic(), record.partition()),
+                                new OffsetAndMetadata(record.offset() + 1));
         }
         consumer.commitAsync();
     }
