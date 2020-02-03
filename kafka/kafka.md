@@ -143,7 +143,7 @@ KafkaConsumer<String, Person> consumer = new KafkaConsumer<>(props);
 
 #### 订阅和轮询
 
-* at-least once: 保证消息不丢，但可能重复。消费者已经处理完了，但是offset还没提交，此时消费者挂了，就会导致消费者重复消费。
+* at least once: 保证消息不丢，但可能重复。消费者已经处理完了，但是offset还没提交，此时消费者挂了，就会导致消费者重复消费。
 
 ```java
 class RebalanceHandler implements ConsumerRebalanceListener {
