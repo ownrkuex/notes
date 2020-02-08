@@ -101,6 +101,21 @@ key为null，用轮询的方式把消息均匀分布到各个分区上；key不�
 1. 实现`Partitioner`接口
 1. KafkaProducer的`partitioner.class`属性设置为`Partitioner`的实现类
 
+### 幂等性
+
+生产者的`enable.idempotence`属性设为true启用幂等性。
+
+引入幂等性的目的：生产者在重试时可能会重复生产消息，引入幂等性可以避免这种情况。
+
+![](producer_msg_duplication.png)
+
+为了实现幂等性，Kafka引入了Producer ID(PID)和Sequence Number。
+
+* PID：每个新的Producer在初始化的时候会被分配一个唯一的PID，这个PID对用户是不可见的。
+* Sequence Number：对特定的PID, topic和partition，消息包含一个从0开始自增的Sequence Number。
+
+![](producer_idempotence.png)
+
 ## 消费者
 
 ### 分区再均衡
